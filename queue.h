@@ -6,8 +6,10 @@
 
 #include <string>
 
+//Representa una cola con un algoritmo particular
 class QUEUE {
 private:
+    bool order; //0 = desc, 1 = asc
     int algID;
     int quantum;
 public:
@@ -15,12 +17,12 @@ public:
     QUEUE(int algID, int quantum);
 
     //==Getters==
-    int get_algID();
-    int get_quantum();
+    int get_algID() const;
+    int get_quantum() const;
 
     //==Setters==
     void set_algID(int value);
-    void set_algID(std::string &value);
+    void set_algID(const std::string &value);
     void set_quantum(int value);
 };
 
