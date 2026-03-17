@@ -3,10 +3,25 @@
 //
 
 #include "queue.h"
+
 //==Constructor==
-QUEUE::QUEUE(int algID, int quantum) {
+QUEUE::QUEUE(const bool isPreemptive, const bool order, const int algID, const int quantum) {
+    this->isPreemptive = isPreemptive;
+    this->order = order;
     this->algID = algID;
     this->quantum = quantum;
+    asociatedProcesses.clear();
+}
+
+//==Métodos Principales==
+void QUEUE::addProcess(int processID) {
+    asociatedProcesses.emplace(processID);
+}
+
+void QUEUE::removeProcess(int processID) {
+    if (asociatedProcesses.contains(processID)) {
+        asociatedProcesses.erase(processID);
+    }
 }
 
 //==Getters==

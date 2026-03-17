@@ -12,12 +12,17 @@ class SCHEDULER {
 private:
     std::vector<QUEUE> MLQ;
     TABLE dataTable;
+    int multiQueueType; // 0 = Only one queue with 1 algorithm, 1 = MLQ, 2 = MLFQ
+
+    //==Métodos privados==
+    std::string toUpper(const std::string& input);
+    void emplaceAlg(std::string &alg, std::string &param);
+    void assignProcesses();
 public:
     SCHEDULER(std::vector<std::string> &arguments); //Debe incluir el nombre del archivo para mandar a la TABLE a leerlo
 
     //==Métodos Principales==
     void simulation(); //Al final la tabla queda con todos los datos necesarios
-    void updateTable(); //Ya seleccionado el algoritmo que toca usar (cola) determinar el proceso que hay que ejecutar y actualizar tabla
 
     //==Getters==
     std::vector<QUEUE>& getMLQ();

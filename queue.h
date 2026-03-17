@@ -5,16 +5,23 @@
 #define SCHEDULINGSIMSO_QUEUE_H
 
 #include <string>
+#include <queue>
+#include <set>
 
 //Representa una cola con un algoritmo particular
 class QUEUE {
 private:
-    bool order; //0 = desc, 1 = asc
+    bool isPreemptive;
+    bool order; //False = desc, True = asc
     int algID;
     int quantum;
+    std::set<int> asociatedProcesses;
 public:
-    QUEUE() = default;
-    QUEUE(int algID, int quantum);
+    QUEUE(bool isPreemptive, bool order, int algID, int quantum);
+
+    //==Métodos Principales==
+    void addProcess(int processID);
+    void removeProcess(int processID);
 
     //==Getters==
     int get_algID() const;

@@ -12,6 +12,7 @@
 
 void TABLE::extractDataFromFile(const std::string &path) {
     std::ifstream file(path);
+    size = 0;
 
     if (!file.is_open()) {
         throw std::runtime_error("No se pudo abrir el archivo: " + path);
@@ -62,6 +63,8 @@ void TABLE::extractDataFromFile(const std::string &path) {
             TAT.push_back(-1); //Valores por defecto, si quedan así es porque no se calcularon al final como deberían haber sido
             completionTime.push_back(-1);
             responseTime.push_back(-1);
+
+            size++;
         }
     }
 
@@ -112,4 +115,8 @@ std::vector<int>& TABLE::getWaitingTime() {
 
 std::vector<int>& TABLE::getRemainingTime() {
     return remainingTime;
+}
+
+int TABLE::getSize() {
+    return size;
 }

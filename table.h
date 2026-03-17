@@ -11,6 +11,7 @@
 //Tabla donde se almacenan todos los datos relevantes para ejecutar los algoritmos (como si fuera un ejercicio)
 class TABLE {
 private:
+    int size;
     std::vector<std::string> processTag;
     std::vector<int> burstTime;
     std::vector<int> arrivalTime;
@@ -28,6 +29,7 @@ public:
     void extractDataFromFile(const std::string &path);
 
     //==Getters==
+    int getSize();
     std::vector<std::string>& getProcessTag();
     std::vector<int>& getBurstTime();
     std::vector<int>& getArrivalTime();
