@@ -3,10 +3,73 @@
 //
 
 #include "table.h"
+#include <fstream>
+#include <stdexcept>
+#include <exception>
+#include <sstream>
+#include <iostream>
+#include <string>
 
-void TABLE::extractDataFromFile(std::string fileName) {
-    //Falta implementar
-    ;
+void TABLE::extractDataFromFile(const std::string &path) {
+    std::ifstream file(path);
+
+    if (!file.is_open()) {
+        throw std::runtime_error("No se pudo abrir el archivo: " + path);
+        file.close();
+    }
+
+    std::string line;
+    std::istringstream lineStream;
+    std::string token;
+    int conv;
+    processTag.clear();
+    burstTime.clear();
+    arrivalTime.clear();
+    queue.clear();
+    priority.clear();
+    waitingTime.clear();
+    remainingTime.clear();
+    TAT.clear();
+    completionTime.clear();
+    responseTime.clear();
+    while (std::getline(file, line)) {
+        if (!line.empty() && line[0] != '#') {
+            lineStream.clear();
+            lineStream.str(line);
+
+            lineStream >> token;
+            token.pop_back();
+            processTag.push_back(token);
+
+            lineStream >> token;
+            token.pop_back();
+            conv = std::stoi(token);
+            burstTime.push_back(conv);
+            remainingTime.push_back(conv);
+
+            lineStream >> token;
+            token.pop_back();
+            arrivalTime.push_back(std::stoi(token));
+
+            lineStream >> token;
+            token.pop_back();
+            queue.push_back(std::stoi(token));
+
+            lineStream >> token; //No se hace pop_back puesto que el ultimo elemento NO tiene separador ";" a su derecha
+            priority.push_back(std::stoi(token));
+
+            waitingTime.push_back(0);
+            TAT.push_back(-1); //Valores por defecto, si quedan así es porque no se calcularon al final como deberían haber sido
+            completionTime.push_back(-1);
+            responseTime.push_back(-1);
+        }
+    }
+
+    if (!file.eof()) {
+        file.close();
+        throw std::runtime_error("Error al leer el archivo: " + path);
+    }
+    file.close();
 }
 
 //==Getters==

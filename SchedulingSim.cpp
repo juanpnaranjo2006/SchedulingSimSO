@@ -1,7 +1,30 @@
 #include <iostream>
 #include <string>
+#include "scheduler.h"
 
 int main(int argc, char* argv[]) {
+    /*
+    //Prueba
+    TABLE table;
+    std::string path;
+    std::cin >> path;
+    table.extractDataFromFile(path);
+    std::cout << "etiqueta; burst time (BT); tiempo restante para completar(RemT); arrival time (AT); Queue (Q); Priority; ";
+    std::cout << "Response Time (RT); Completion Time (CT); Turnaround Time (TAT); Waiting Time (WT)\n";
+    for (int i = 0; i < 5; i++) {
+        std::cout << table.getProcessTag()[i] << "; ";
+        std::cout << table.getBurstTime()[i] << "; ";
+        std::cout << table.getRemainingTime()[i] << "; ";
+        std::cout << table.getArrivalTime()[i] << "; ";
+        std::cout << table.getQueue()[i] << "; ";
+        std::cout << table.getPriority()[i] << "; ";
+        std::cout << table.getResponseTime()[i] << "; ";
+        std::cout << table.getCompletionTime()[i] << "; ";
+        std::cout << table.getTAT()[i] << "; ";
+        std::cout << table.getWaitingTime()[i] << "\n";
+    }
+    return 0;
+    */
     //Recordar, argv[0] siempre es el nombre del ejecutable
     if (argc == 2) {
        std::string argument(argv[1]);

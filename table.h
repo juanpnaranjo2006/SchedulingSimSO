@@ -25,7 +25,7 @@ public:
     TABLE() = default;
 
     //==Métodos principales==
-    void extractDataFromFile(std::string fileName);
+    void extractDataFromFile(const std::string &path);
 
     //==Getters==
     std::vector<std::string>& getProcessTag();
