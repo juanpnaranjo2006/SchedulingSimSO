@@ -81,6 +81,10 @@ int main(int argc, char* argv[]) {
             sch.simulation();
 
             //Impresión de los datos de la tabla
+            float promRes = 0;
+            float promComp = 0;
+            float promTAT = 0;
+            float promWait = 0;
             std::cout << "Process Tag; Burst Time (BT); Remaining Time (RemT); Arrival Time (AT); Queue; Priority; Response Time (RT), Completion Time (CT), TurnAround Time (TAT), Waiting Time (WT)\n";
             for (int i = 0; i < sch.getTable().getSize(); ++i) {
                 std::cout << sch.getTable().getProcessTag()[i] << "; "
@@ -93,8 +97,21 @@ int main(int argc, char* argv[]) {
                 << sch.getTable().getCompletionTime()[i] << "; "
                 << sch.getTable().getTAT()[i] << "; "
                 << sch.getTable().getWaitingTime()[i] << "\n";
+                promRes += static_cast<float>(sch.getTable().getResponseTime()[i]);
+                promComp += static_cast<float>(sch.getTable().getCompletionTime()[i]);
+                promTAT += static_cast<float>(sch.getTable().getTAT()[i]);
+                promWait += static_cast<float>(sch.getTable().getWaitingTime()[i]);
             }
-            int h = 0;
+            promRes = promRes / static_cast<float>(sch.getTable().getSize());
+            promComp = promComp / static_cast<float>(sch.getTable().getSize());
+            promTAT = promTAT / static_cast<float>(sch.getTable().getSize());
+            promWait = promWait / static_cast<float>(sch.getTable().getSize());
+            std::cout << "---------------------------------------------------\n";
+            std::cout << "AVERAGE METRICS\n";
+            std::cout << "Average RT  : " << promRes << "\n";
+            std::cout << "Average CT  : " << promComp << "\n";
+            std::cout << "Average TAT : " << promTAT << "\n";
+            std::cout << "Average WT  : " << promWait << "\n";
         }
         catch (std::exception& e) {
             std::cout << "Error: " << e.what() << "\nThe issue is most likely due to incorrect input parameters:\n";
