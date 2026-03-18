@@ -258,10 +258,10 @@ int SCHEDULER::executeProcess(int numCola) {
         startTime = currentTime - passedTime;
         endTime = currentTime;
         for (int i = 0; i < dataTable.getSize(); i++) {
-            if (dataTable.getRemainingTime()[i] > 0 && dataTable.getArrivalTime()[i] <= startTime) {
+            if (i != p && dataTable.getRemainingTime()[i] > 0 && dataTable.getArrivalTime()[i] <= startTime) {
                 dataTable.getWaitingTime()[i] += passedTime;
             }
-            else if (dataTable.getRemainingTime()[i] > 0 && dataTable.getArrivalTime()[i] < endTime) {
+            else if (i != p && dataTable.getRemainingTime()[i] > 0 && dataTable.getArrivalTime()[i] < endTime) {
                 dataTable.getWaitingTime()[i] += (endTime - dataTable.getArrivalTime()[i]);
             }
         }
@@ -310,10 +310,10 @@ int SCHEDULER::executeProcess(int numCola) {
         startTime = currentTime - passedTime;
         endTime = currentTime;
         for (int i = 0; i < dataTable.getSize(); i++) {
-            if (dataTable.getRemainingTime()[i] > 0 && dataTable.getArrivalTime()[i] <= startTime) {
+            if (i != p && dataTable.getRemainingTime()[i] > 0 && dataTable.getArrivalTime()[i] <= startTime) {
                 dataTable.getWaitingTime()[i] += passedTime;
             }
-            else if (dataTable.getRemainingTime()[i] > 0 && dataTable.getArrivalTime()[i] < endTime) {
+            else if (i != p && dataTable.getRemainingTime()[i] > 0 && dataTable.getArrivalTime()[i] < endTime) {
                 dataTable.getWaitingTime()[i] += (endTime - dataTable.getArrivalTime()[i]);
             }
         }
