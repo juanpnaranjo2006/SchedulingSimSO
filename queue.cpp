@@ -11,17 +11,26 @@ QUEUE::QUEUE(const bool isPreemptive, const bool order, const int algID, const i
     this->algID = algID;
     this->quantum = quantum;
     asociatedProcesses.clear();
+    arrivalT.clear();
 }
 
 //==Métodos Principales==
-void QUEUE::addProcess(int processID) {
+void QUEUE::addProcess(int processID, int time) {
     asociatedProcesses.emplace(processID);
+    arrivalT.emplace(processID, time);
+    visited.emplace(processID, false);
 }
 
 void QUEUE::removeProcess(int processID) {
     if (asociatedProcesses.contains(processID)) {
         asociatedProcesses.erase(processID);
+        arrivalT.erase(processID);
+        visited.erase(processID);
     }
+}
+
+bool QUEUE::isEmpty() const {
+    return asociatedProcesses.empty();
 }
 
 //==Getters==
@@ -31,6 +40,26 @@ int QUEUE::get_algID() const {
 
 int QUEUE::get_quantum() const {
     return quantum;
+}
+
+bool QUEUE::isPreemp() const {
+    return isPreemptive;
+}
+
+bool QUEUE::isAscending() const {
+    return order;
+}
+
+std::set<int>& QUEUE::getAssociatedProcesses(){
+    return asociatedProcesses;
+}
+
+std::map<int, int>& QUEUE::getArrivalT() {
+    return arrivalT;
+}
+
+std::map<int, int>& QUEUE::getVisited() {
+    return visited;
 }
 
 //==Setters==

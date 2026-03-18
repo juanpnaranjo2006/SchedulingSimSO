@@ -22,6 +22,8 @@ SCHEDULER::SCHEDULER(std::vector<std::string> &arguments) {
      */
     dataTable.extractDataFromFile(arguments[0]);
     MLQ.clear();
+    numQ = 0;
+    currentTime = 0;
     arguments[1] = toUpper(arguments[1]);
     if (arguments[1] == "MLQ") {
         multiQueueType = 1;
@@ -77,8 +79,11 @@ SCHEDULER::SCHEDULER(std::vector<std::string> &arguments) {
         }
     }
 
-    //Despues de crear cada cola asignamos cada algoritmo a su cola correspondiente
+    //Después de crear cada cola asignamos cada algoritmo a su cola correspondiente
     assignProcesses();
+
+    //Ahora tomamos un registro de todos los tiempos donde llega un nuevo procesos a CPU, será útil para la simulación
+    setRelevantTimes();
 }
 
 //==Métodos privados==
@@ -125,19 +130,222 @@ void SCHEDULER::emplaceAlg(std::string &alg, std::string &param) {
     else {
         throw std::invalid_argument("The algorithm '" + alg + "' is not supported by the simulator.");
     }
+    numQ++;
 }
 
 void SCHEDULER::assignProcesses() {
     if (multiQueueType == 1) {
         for (int i = 0; i < dataTable.getSize(); i++) {
-            MLQ[dataTable.getQueue()[i] - 1].addProcess(i);
+            MLQ[dataTable.getQueue()[i] - 1].addProcess(i, dataTable.getArrivalTime()[i]);
         }
     }
     else {
         for (int i = 0; i < dataTable.getSize(); i++) {
-            MLQ[0].addProcess(i);
+            MLQ[0].addProcess(i, dataTable.getArrivalTime()[i]);
         }
     }
+}
+
+void SCHEDULER::setRelevantTimes() {
+    for (int i = 0; i < dataTable.getSize(); i++) {
+        relevantTimes.emplace(dataTable.getArrivalTime()[i]);
+    }
+}
+
+void SCHEDULER::simulation() {
+    /*
+    Vamos a ir cola por cola, empezando por las colas de mayor prioridad (que son las primeras)
+    hasta llegar a una cla que aún tenga procesos sin resolver. Sabemos que hemos terminado
+    en tanto pasemos por todas las colas y todas estén sin procesos por ejecutar
+    */
+    int numCola;
+    bool proccessFound = true;
+    while (proccessFound) {
+        proccessFound = false;
+        numCola = 0;
+        while (numCola < numQ && !proccessFound) {
+            if (!MLQ[numCola].isEmpty()) {
+                proccessFound = true;
+                executeProcess(numCola);
+            }
+            numCola++;
+        }
+    }
+}
+
+void SCHEDULER::executeProcess(int numCola) {
+    int p;
+    int passedTime;
+    int startTime;
+    int endTime;
+    if (!MLQ[numCola].isPreemp()) {
+        p = determineProcess(numCola);
+        passedTime = dataTable.getRemainingTime()[p];
+        dataTable.getRemainingTime()[p] = 0;
+        currentTime += passedTime;
+        dataTable.getCompletionTime()[p] = currentTime;
+
+        startTime = currentTime - passedTime;
+        endTime = currentTime;
+        for (int i = 0; i < dataTable.getSize(); i++) {
+            if (dataTable.getRemainingTime()[i] > 0 && dataTable.getArrivalTime()[i] <= startTime) {
+                dataTable.getWaitingTime()[i] += passedTime;
+            }
+            else if (dataTable.getRemainingTime()[i] > 0 && dataTable.getArrivalTime()[i] < endTime) {
+                dataTable.getWaitingTime()[i] += (endTime - dataTable.getArrivalTime()[i]);
+            }
+        }
+
+        for (std::set<int>::iterator itRelevant = relevantTimes.begin(); itRelevant != relevantTimes.end();) {
+            if (*itRelevant <= currentTime) {
+                itRelevant = relevantTimes.erase(itRelevant); // devuelve el siguiente válido
+            } else {
+                break; // como está ordenado, ya puedo parar
+            }
+        }
+
+        MLQ[numCola].removeProcess(p);
+    }
+    else if (MLQ[numCola].get_algID() == 2 || MLQ[numCola].get_algID() == 4) {
+        //PSJF, P-PRIORITY
+        p = determineProcess(numCola);
+        if (relevantTimes.empty() || currentTime + dataTable.getRemainingTime()[p] < *(relevantTimes.begin()) ) {
+            passedTime = dataTable.getRemainingTime()[p];
+            MLQ[numCola].removeProcess(p);
+            dataTable.getCompletionTime()[p] = currentTime + passedTime;
+        }
+        else {
+            passedTime = *(relevantTimes.begin()) - currentTime;
+            relevantTimes.erase(relevantTimes.begin());
+            if (multiQueueType == 2 && numCola != numQ - 1) {
+                MLQ[numCola].removeProcess(p);
+                MLQ[numCola + 1].addProcess(p, currentTime + passedTime);
+            }
+        }
+        dataTable.getRemainingTime()[p] -= passedTime;
+        currentTime += passedTime;
+
+        startTime = currentTime - passedTime;
+        endTime = currentTime;
+        for (int i = 0; i < dataTable.getSize(); i++) {
+            if (dataTable.getRemainingTime()[i] > 0 && dataTable.getArrivalTime()[i] <= startTime) {
+                dataTable.getWaitingTime()[i] += passedTime;
+            }
+            else if (dataTable.getRemainingTime()[i] > 0 && dataTable.getArrivalTime()[i] < endTime) {
+                dataTable.getWaitingTime()[i] += (endTime - dataTable.getArrivalTime()[i]);
+            }
+        }
+    }
+    else if (MLQ[numCola].get_algID() == 5) {
+        //RR
+        p = determineProcess(numCola);
+        if (dataTable.getRemainingTime()[p] <= MLQ[numCola].get_quantum()) {
+            passedTime = dataTable.getRemainingTime()[p];
+            MLQ[numCola].removeProcess(p);
+            dataTable.getCompletionTime()[p] = currentTime + passedTime;
+        }
+        else {
+            passedTime = MLQ[numCola].get_quantum();
+        }
+
+        if ( !(relevantTimes.empty() || currentTime + passedTime < *(relevantTimes.begin())) ) {
+            passedTime = *(relevantTimes.begin()) - currentTime;
+            relevantTimes.erase(relevantTimes.begin());
+        }
+        else {
+            if (multiQueueType == 2 && numCola != numQ - 1) {
+                MLQ[numCola].removeProcess(p);
+                MLQ[numCola + 1].addProcess(p, currentTime + passedTime);
+            }
+            else {
+                MLQ[numCola].removeProcess(p);
+                MLQ[numCola].addProcess(p, currentTime + passedTime);
+            }
+        }
+
+        dataTable.getRemainingTime()[p] -= passedTime;
+        currentTime += passedTime;
+
+        startTime = currentTime - passedTime;
+        endTime = currentTime;
+        for (int i = 0; i < dataTable.getSize(); i++) {
+            if (dataTable.getRemainingTime()[i] > 0 && dataTable.getArrivalTime()[i] <= startTime) {
+                dataTable.getWaitingTime()[i] += passedTime;
+            }
+            else if (dataTable.getRemainingTime()[i] > 0 && dataTable.getArrivalTime()[i] < endTime) {
+                dataTable.getWaitingTime()[i] += (endTime - dataTable.getArrivalTime()[i]);
+            }
+        }
+    }
+}
+
+int SCHEDULER::determineProcess(int numCola) {
+    int id = MLQ[numCola].get_algID();
+    int process;
+    std::string firstTag = "!";
+    int firstTime = -1;
+    int firstProcess = -1;
+    if (id == 0) {
+        //FCFS
+        for (std::set<int>::iterator it = MLQ[numCola].getAssociatedProcesses().begin(); it != MLQ[numCola].getAssociatedProcesses().end(); ++it) {
+            process = *it;
+            if (dataTable.getArrivalTime()[process] <= currentTime && ( firstTime == -1 || (dataTable.getArrivalTime()[process] < firstTime || ( dataTable.getArrivalTime()[process] == firstTime && ( firstTag == "!" || dataTable.getProcessTag()[process] < firstTag ) ) ) ) ) {
+                firstTime = dataTable.getArrivalTime()[process];
+                firstTag = dataTable.getProcessTag()[process];
+                firstProcess = process;
+            }
+        }
+    }
+    else if (id == 1 || id == 2) {
+        // SJF / PSJF (Unifico esto porque algo en SJF podría venir semi-trabajado de otra cola)
+        for (std::set<int>::iterator it = MLQ[numCola].getAssociatedProcesses().begin(); it != MLQ[numCola].getAssociatedProcesses().end(); ++it) {
+            process = *it;
+            if (dataTable.getArrivalTime()[process] <= currentTime && ( firstTime == -1 || ( dataTable.getRemainingTime()[process] < firstTime || ( dataTable.getRemainingTime()[process] == firstTime && dataTable.getProcessTag()[process] < firstTag  ) ) ) ) {
+                firstTime = dataTable.getRemainingTime()[process];
+                firstTag = dataTable.getProcessTag()[process];
+                firstProcess = process;
+            }
+        }
+    }
+    else if (id == 3 || id == 4) {
+        //PRIORITY / P-PRIORITY
+        if (MLQ[numCola].isAscending()) {
+            //ASC
+            for (std::set<int>::iterator it = MLQ[numCola].getAssociatedProcesses().begin(); it != MLQ[numCola].getAssociatedProcesses().end(); ++it) {
+                process = *it;
+                if (dataTable.getArrivalTime()[process] <= currentTime && ( firstTime == -1 || ( dataTable.getPriority()[process] < firstTime || ( dataTable.getPriority()[process] == firstTime && dataTable.getProcessTag()[process] < firstTag  ) ) ) ) {
+                    firstTime = dataTable.getPriority()[process];
+                    firstTag = dataTable.getProcessTag()[process];
+                    firstProcess = process;
+                }
+            }
+        }
+        else {
+            //DESC
+            for (std::set<int>::iterator it = MLQ[numCola].getAssociatedProcesses().begin(); it != MLQ[numCola].getAssociatedProcesses().end(); ++it) {
+                process = *it;
+                if (dataTable.getArrivalTime()[process] <= currentTime && ( firstTime == -1 || ( dataTable.getPriority()[process] > firstTime || ( dataTable.getPriority()[process] == firstTime && dataTable.getProcessTag()[process] < firstTag  ) ) ) ) {
+                    firstTime = dataTable.getPriority()[process];
+                    firstTag = dataTable.getProcessTag()[process];
+                    firstProcess = process;
+                }
+            }
+        }
+    }
+    else if (id == 5) {
+        //RR
+        for (std::set<int>::iterator itRR = MLQ[numCola].getAssociatedProcesses().begin(); itRR != MLQ[numCola].getAssociatedProcesses().end(); itRR++) {
+            process = *itRR;
+
+            if (MLQ[numCola].getArrivalT()[process] <= currentTime && (firstTime == -1 || MLQ[numCola].getArrivalT()[process] < firstTime || (MLQ[numCola].getArrivalT()[process] == firstTime && dataTable.getProcessTag()[process] < firstTag))) {
+
+                firstTime = MLQ[numCola].getArrivalT()[process];
+                firstTag = dataTable.getProcessTag()[process];
+                firstProcess = process;
+            }
+        }
+    }
+    return firstProcess;
 }
 
 //==Getters==
