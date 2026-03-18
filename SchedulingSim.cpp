@@ -36,7 +36,48 @@ int main(int argc, char* argv[]) {
     }
     else {
         //Normal execution
-        ;
+
+        //Primero vamos a reunir todos los argumentos del uso del simulador para enpaquetarlos de forma que se pueda inicializar el scheduler
+        std::vector<std::string> args;
+        args.emplace_back(argv[1]);
+        args.emplace_back(argv[2]);
+        if (args[1] == "PRIORITY" || args[1] == "P-PRIORITY" || args[1] == "RR") {
+            args.emplace_back(argv[3]);
+        }
+        else if (args[1] == "MLQ") {
+            args.emplace_back(argv[3]);
+            std::string algType;
+            for (int i = 4; i < argc;) {
+                algType = argv[i];
+                if (algType == "PRIORITY" || algType == "P-PRIORITY" || algType == "RR") {
+                    args.emplace_back(algType + " " + std::string(argv[i + 1]));
+                    i += 2;
+                }
+                else {
+                    args.emplace_back(algType);
+                    i += 1;
+                }
+            }
+        }
+        else if (args[1] == "MLFQ") {
+            args.emplace_back(argv[3]);
+            int i;
+            int n = std::stoi(argv[3]);
+            for (i = 0; i < n - 1; i++) {
+                args.emplace_back(argv[4 + i]);
+            }
+            std::string algType = argv[4 + i];
+            if (algType == "PRIORITY" || algType == "P-PRIORITY" || algType == "RR") {
+                args.emplace_back(algType + " " + std::string(argv[4 + i + 1]));
+                i += 2;
+            }
+            else {
+                args.emplace_back(algType);
+                i += 1;
+            }
+        }
+        //Creación del SCHEDULER
+        SCHEDULER sch = SCHEDULER(args);
     }
     return 0;
 }
