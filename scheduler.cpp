@@ -344,12 +344,25 @@ int SCHEDULER::determineProcess(int numCola) {
     }
     else if (id == 1 || id == 2) {
         // SJF / PSJF (Unifico esto porque algo en SJF podría venir semi-trabajado de otra cola)
-        for (std::set<int>::iterator it = MLQ[numCola].getAssociatedProcesses().begin(); it != MLQ[numCola].getAssociatedProcesses().end(); ++it) {
-            process = *it;
-            if (dataTable.getArrivalTime()[process] <= currentTime && ( firstTime == -1 || ( dataTable.getRemainingTime()[process] < firstTime || ( dataTable.getRemainingTime()[process] == firstTime && dataTable.getProcessTag()[process] < firstTag  ) ) ) ) {
-                firstTime = dataTable.getRemainingTime()[process];
-                firstTag = dataTable.getProcessTag()[process];
-                firstProcess = process;
+        if (id == 1 && MLQ[numCola].isFirstTimeSJF()) {
+            for (std::set<int>::iterator it = MLQ[numCola].getAssociatedProcesses().begin(); it != MLQ[numCola].getAssociatedProcesses().end(); ++it) {
+                process = *it;
+                if (dataTable.getArrivalTime()[process] <= currentTime && ( firstTime == -1 || ( dataTable.getArrivalTime()[process] < firstTime || ( dataTable.getArrivalTime()[process] == firstTime && dataTable.getProcessTag()[process] < firstTag ) ) ) ) {
+                    firstTime = dataTable.getArrivalTime()[process];
+                    firstTag = dataTable.getProcessTag()[process];
+                    firstProcess = process;
+                }
+            }
+            MLQ[numCola].set_firstTimeSJF(false);
+        }
+        else {
+            for (std::set<int>::iterator it = MLQ[numCola].getAssociatedProcesses().begin(); it != MLQ[numCola].getAssociatedProcesses().end(); ++it) {
+                process = *it;
+                if (dataTable.getArrivalTime()[process] <= currentTime && ( firstTime == -1 || ( dataTable.getRemainingTime()[process] < firstTime || ( dataTable.getRemainingTime()[process] == firstTime && dataTable.getProcessTag()[process] < firstTag  ) ) ) ) {
+                    firstTime = dataTable.getRemainingTime()[process];
+                    firstTag = dataTable.getProcessTag()[process];
+                    firstProcess = process;
+                }
             }
         }
     }

@@ -12,6 +12,7 @@ QUEUE::QUEUE(const bool isPreemptive, const bool order, const int algID, const i
     this->quantum = quantum;
     asociatedProcesses.clear();
     arrivalT.clear();
+    firstTimeSJF = true;
 }
 
 //==Métodos Principales==
@@ -50,6 +51,10 @@ bool QUEUE::isAscending() const {
     return order;
 }
 
+bool QUEUE::isFirstTimeSJF() const {
+    return firstTimeSJF;
+}
+
 std::set<int>& QUEUE::getAssociatedProcesses(){
     return asociatedProcesses;
 }
@@ -73,4 +78,8 @@ void QUEUE::set_algID(const std::string &value) {
 
 void QUEUE::set_quantum(const int value) {
     quantum = value;
+}
+
+void QUEUE::set_firstTimeSJF(const bool value) {
+    firstTimeSJF = value;
 }
