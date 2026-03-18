@@ -160,30 +160,54 @@ void SCHEDULER::simulation() {
     */
     int numCola;
     bool proccessFound = true;
-    while (proccessFound) {
+    int p;
+    numPCompleted = 0;
+    while (numPCompleted < dataTable.getSize()) {
         proccessFound = false;
         numCola = 0;
         while (numCola < numQ && !proccessFound) {
             if (!MLQ[numCola].isEmpty()) {
-                proccessFound = true;
-                executeProcess(numCola);
+                p = executeProcess(numCola);
+
+                if (p != -1) {
+                    proccessFound = true;
+                }
             }
             numCola++;
         }
+
+        if (!proccessFound) {
+            if (!relevantTimes.empty()) {
+                currentTime = *relevantTimes.begin();
+                relevantTimes.erase(relevantTimes.begin());
+            }
+        }
+    }
+
+    for (int i = 0; i < dataTable.getSize(); i++) {
+        dataTable.getTAT()[i] = dataTable.getCompletionTime()[i] - dataTable.getArrivalTime()[i];
     }
 }
 
-void SCHEDULER::executeProcess(int numCola) {
+int SCHEDULER::executeProcess(int numCola) {
     int p;
     int passedTime;
     int startTime;
     int endTime;
-    if (!MLQ[numCola].isPreemp()) {
-        p = determineProcess(numCola);
+    while (!relevantTimes.empty() && *relevantTimes.begin() <= currentTime) {
+        relevantTimes.erase(relevantTimes.begin());
+    }
+    p = determineProcess(numCola);
+    if (p == -1) {
+        //No se encontró un proceso válido para este tiempo, entonces no hacemos nada para esta cola
+        ;
+    }
+    else if (!MLQ[numCola].isPreemp()) {
         passedTime = dataTable.getRemainingTime()[p];
         dataTable.getRemainingTime()[p] = 0;
         currentTime += passedTime;
         dataTable.getCompletionTime()[p] = currentTime;
+        numPCompleted++;
 
         startTime = currentTime - passedTime;
         endTime = currentTime;
@@ -208,15 +232,21 @@ void SCHEDULER::executeProcess(int numCola) {
     }
     else if (MLQ[numCola].get_algID() == 2 || MLQ[numCola].get_algID() == 4) {
         //PSJF, P-PRIORITY
-        p = determineProcess(numCola);
         if (relevantTimes.empty() || currentTime + dataTable.getRemainingTime()[p] < *(relevantTimes.begin()) ) {
             passedTime = dataTable.getRemainingTime()[p];
             MLQ[numCola].removeProcess(p);
             dataTable.getCompletionTime()[p] = currentTime + passedTime;
+            numPCompleted++;
+
+            if (!relevantTimes.empty() && currentTime + passedTime == *relevantTimes.begin()) {
+                relevantTimes.erase(relevantTimes.begin());
+            }
         }
         else {
             passedTime = *(relevantTimes.begin()) - currentTime;
-            relevantTimes.erase(relevantTimes.begin());
+            if (!relevantTimes.empty() && currentTime + passedTime == *relevantTimes.begin()) {
+                relevantTimes.erase(relevantTimes.begin());
+            }
             if (multiQueueType == 2 && numCola != numQ - 1) {
                 MLQ[numCola].removeProcess(p);
                 MLQ[numCola + 1].addProcess(p, currentTime + passedTime);
@@ -238,21 +268,21 @@ void SCHEDULER::executeProcess(int numCola) {
     }
     else if (MLQ[numCola].get_algID() == 5) {
         //RR
-        p = determineProcess(numCola);
-        if (dataTable.getRemainingTime()[p] <= MLQ[numCola].get_quantum()) {
-            passedTime = dataTable.getRemainingTime()[p];
-            MLQ[numCola].removeProcess(p);
-            dataTable.getCompletionTime()[p] = currentTime + passedTime;
-        }
-        else {
-            passedTime = MLQ[numCola].get_quantum();
+        passedTime = std::min(dataTable.getRemainingTime()[p],MLQ[numCola].get_quantum());
+        if (!relevantTimes.empty()) {
+            passedTime = std::min(passedTime, *(relevantTimes.begin()) - currentTime);
         }
 
-        if ( !(relevantTimes.empty() || currentTime + passedTime < *(relevantTimes.begin())) ) {
-            passedTime = *(relevantTimes.begin()) - currentTime;
-            relevantTimes.erase(relevantTimes.begin());
+        if (dataTable.getRemainingTime()[p] <= passedTime) {
+            MLQ[numCola].removeProcess(p);
+            dataTable.getCompletionTime()[p] = currentTime + passedTime;
+            numPCompleted++;
+
+            if (!relevantTimes.empty() && currentTime + passedTime == *relevantTimes.begin()) {
+                relevantTimes.erase(relevantTimes.begin());
+            }
         }
-        else {
+        else if (passedTime == MLQ[numCola].get_quantum()) {
             if (multiQueueType == 2 && numCola != numQ - 1) {
                 MLQ[numCola].removeProcess(p);
                 MLQ[numCola + 1].addProcess(p, currentTime + passedTime);
@@ -261,6 +291,17 @@ void SCHEDULER::executeProcess(int numCola) {
                 MLQ[numCola].removeProcess(p);
                 MLQ[numCola].addProcess(p, currentTime + passedTime);
             }
+
+            if (!relevantTimes.empty() && currentTime + passedTime == *relevantTimes.begin()) {
+                relevantTimes.erase(relevantTimes.begin());
+            }
+        }
+        else {
+            if (!relevantTimes.empty() && currentTime + passedTime == *relevantTimes.begin()) {
+                relevantTimes.erase(relevantTimes.begin());
+            }
+            MLQ[numCola].removeProcess(p);
+            MLQ[numCola].addProcess(p, currentTime + passedTime);
         }
 
         dataTable.getRemainingTime()[p] -= passedTime;
@@ -277,6 +318,11 @@ void SCHEDULER::executeProcess(int numCola) {
             }
         }
     }
+
+    if (p != -1 && dataTable.getResponseTime()[p] == -1) {
+        dataTable.getResponseTime()[p] = currentTime - passedTime;
+    }
+    return p;
 }
 
 int SCHEDULER::determineProcess(int numCola) {

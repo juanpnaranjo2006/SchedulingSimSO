@@ -16,6 +16,7 @@ private:
     int multiQueueType; // 0 = Only one queue with 1 algorithm, 1 = MLQ, 2 = MLFQ
     std::set<int> relevantTimes;
     int currentTime;
+    int numPCompleted;
 
     //==Métodos privados==
     std::string toUpper(const std::string& input);
@@ -27,7 +28,7 @@ public:
 
     //==Métodos Principales==
     void simulation(); //Al final la tabla queda con todos los datos necesarios
-    void executeProcess(int numCola);
+    int executeProcess(int numCola);
     int determineProcess(int numCola);
 
     //==Getters==

@@ -78,6 +78,23 @@ int main(int argc, char* argv[]) {
             }
             //Creación del SCHEDULER
             SCHEDULER sch = SCHEDULER(args);
+            sch.simulation();
+
+            //Impresión de los datos de la tabla
+            std::cout << "Process Tag; Burst Time (BT); Remaining Time (RemT); Arrival Time (AT); Queue; Priority; Response Time (RT), Completion Time (CT), TurnAround Time (TAT), Waiting Time (WT)\n";
+            for (int i = 0; i < sch.getTable().getSize(); ++i) {
+                std::cout << sch.getTable().getProcessTag()[i] << "; "
+                << sch.getTable().getBurstTime()[i] << "; "
+                << sch.getTable().getRemainingTime()[i] << "; "
+                << sch.getTable().getArrivalTime()[i] << "; "
+                << sch.getTable().getQueue()[i] << "; "
+                << sch.getTable().getPriority()[i] << "; "
+                << sch.getTable().getResponseTime()[i] << "; "
+                << sch.getTable().getCompletionTime()[i] << "; "
+                << sch.getTable().getTAT()[i] << "; "
+                << sch.getTable().getWaitingTime()[i] << "\n";
+            }
+            int h = 0;
         }
         catch (std::exception& e) {
             std::cout << "Error: " << e.what() << "\nThe issue is most likely due to incorrect input parameters:\n";

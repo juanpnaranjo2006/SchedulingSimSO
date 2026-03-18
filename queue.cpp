@@ -58,7 +58,7 @@ std::map<int, int>& QUEUE::getArrivalT() {
     return arrivalT;
 }
 
-std::map<int, int>& QUEUE::getVisited() {
+std::map<int, bool>& QUEUE::getVisited() {
     return visited;
 }
 
