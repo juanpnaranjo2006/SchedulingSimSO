@@ -269,9 +269,11 @@ int SCHEDULER::executeProcess(int numCola) {
     else if (MLQ[numCola].get_algID() == 5) {
         //RR
         passedTime = std::min(dataTable.getRemainingTime()[p],MLQ[numCola].get_quantum());
+        /*
         if (!relevantTimes.empty()) {
             passedTime = std::min(passedTime, *(relevantTimes.begin()) - currentTime);
         }
+        */
 
         if (dataTable.getRemainingTime()[p] <= passedTime) {
             MLQ[numCola].removeProcess(p);
@@ -296,6 +298,7 @@ int SCHEDULER::executeProcess(int numCola) {
                 relevantTimes.erase(relevantTimes.begin());
             }
         }
+        /*
         else {
             if (!relevantTimes.empty() && currentTime + passedTime == *relevantTimes.begin()) {
                 relevantTimes.erase(relevantTimes.begin());
@@ -303,6 +306,7 @@ int SCHEDULER::executeProcess(int numCola) {
             MLQ[numCola].removeProcess(p);
             MLQ[numCola].addProcess(p, currentTime + passedTime);
         }
+        */
 
         dataTable.getRemainingTime()[p] -= passedTime;
         currentTime += passedTime;
