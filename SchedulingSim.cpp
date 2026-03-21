@@ -62,7 +62,7 @@ int main(int argc, char* argv[]) {
             else if (args[1] == "MLFQ") {
                 args.emplace_back(argv[3]);
                 int i;
-                int n = std::stoi(argv[3]);
+                int n = std::atoi(argv[3]);
                 for (i = 0; i < n - 1; i++) {
                     args.emplace_back(argv[4 + i]);
                 }

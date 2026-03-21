@@ -23,11 +23,9 @@ void QUEUE::addProcess(int processID, int time) {
 }
 
 void QUEUE::removeProcess(int processID) {
-    if (asociatedProcesses.contains(processID)) {
-        asociatedProcesses.erase(processID);
-        arrivalT.erase(processID);
-        visited.erase(processID);
-    }
+    asociatedProcesses.erase(processID);
+    arrivalT.erase(processID);
+    visited.erase(processID);
 }
 
 bool QUEUE::isEmpty() const {
